@@ -1,0 +1,9 @@
+services:
+  # ── RabbitMQ ────────────────────────────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:4.0-management-alpine
+    container_name: rabbitmq-dev
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: unless-stopped
