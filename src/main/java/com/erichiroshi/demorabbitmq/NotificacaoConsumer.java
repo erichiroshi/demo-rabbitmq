@@ -1,37 +1,17 @@
 package com.erichiroshi.demorabbitmq;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import jakarta.annotation.PostConstruct;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
 @Service
 public class NotificacaoConsumer {
 
-    private static final String FILA = "fila.notificacao";
+    @RabbitListener(queues = RabbitMQConfig.FILA)
+    public void receber(Message message, @Payload NotificacaoDTO notificacaoDTO) {
 
-    @PostConstruct
-    public void iniciar() throws Exception {
-        ConnectionFactory factory = new ConnectionFactory();
-
-        Connection connection = factory.newConnection();
-        Channel channel = connection.createChannel();
-
-        channel.queueDeclare(FILA, true, false, false, null);
-
-        System.out.println("Aguardando mensagens...");
-
-        Thread.ofVirtual().start(() -> {
-            try {
-                channel.basicConsume(FILA, true, (tag, delivery) -> {
-                    String mensagem = new String(delivery.getBody());
-                    System.out.println("Mensagem recebida: " + mensagem);
-                }, tag -> {
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        System.out.println("Raw JSON: " + new String(message.getBody()));
+        System.out.println("DTO deserializado: " + notificacaoDTO);
     }
 }

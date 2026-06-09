@@ -17,7 +17,7 @@ public class NotificacaoController {
     }
 
     @PostMapping
-    public ResponseEntity<String> enviar(@RequestBody NotificacaoDTO dto) throws Exception {
+    public ResponseEntity<String> enviar(@RequestBody NotificacaoDTO dto) {
         producer.enviar(dto);
         return ResponseEntity.ok("Notificação enviada!");
     }

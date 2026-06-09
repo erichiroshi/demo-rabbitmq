@@ -18,13 +18,9 @@ repositories {
     mavenCentral()
 }
 
-ext {
-    rabbitmqVersion = "5.31.0"
-}
-
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-    implementation "com.rabbitmq:amqp-client:${rabbitmqVersion}"
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
 
     developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 }

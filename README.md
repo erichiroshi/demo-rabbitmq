@@ -13,11 +13,11 @@ O objetivo é mostrar a evolução desde a API AMQP mais básica até a configur
 
 ## 🗺️ Roadmap
 
-| Branch | Descrição | Status |
-|--------|-----------|--------|
-| `post/01-amqp-raw` | API AMQP pura — `channel.basicPublish`, bytes na mão | ✅ |
-| `post/02-starter-amqp` | Spring AMQP Starter + Jackson2JsonMessageConverter | 🔜 |
-| `post/03-padrao-mercado` | RabbitTemplate + Exchange + DLQ + @RabbitListener | 🔜 |
+| Branch                   | Descrição                                            | Status |
+|--------------------------|------------------------------------------------------|--------|
+| [`post/01-amqp-raw`](https://github.com/erichiroshi/demo-rabbitmq/tree/post/01-amqp-raw) | API AMQP pura — `channel.basicPublish`, bytes na mão | ✅ |
+| [`post/02-starter-amqp`](https://github.com/erichiroshi/demo-rabbitmq/tree/post/02-starter-amqp) | Spring AMQP Starter + `JacksonJsonMessageConverter` | ✅ |
+| `post/03-padrao-mercado` | RabbitTemplate + Exchange + DLQ + @RabbitListener    | 🔜     |
 
 ---
 
@@ -25,9 +25,12 @@ O objetivo é mostrar a evolução desde a API AMQP mais básica até a configur
 
 - **Java 25**
 - **Spring Boot 4.x** + Spring Web MVC
-- **amqp-client 5.31.0** — lib oficial RabbitMQ (sem abstração Spring)
+- **spring-boot-starter-amqp** — abstração Spring sobre o protocolo AMQP
+- **JacksonJsonMessageConverter** — serialização/deserialização automática para JSON
 - **spring-boot-docker-compose** — sobe infraestrutura automaticamente
 - **RabbitMQ 4.0** com Management UI
+
+> A branch `post/01-amqp-raw` usa `amqp-client 5.31.0` puro, sem abstração Spring — ideal para entender o que acontece por baixo.
 
 ---
 
@@ -58,7 +61,7 @@ Ao iniciar, o Spring Boot detecta o `compose.yml` e sobe o container do RabbitMQ
 ```bash
 curl -X POST http://localhost:8080/notificacoes \
   -H "Content-Type: application/json" \
-  -d '{"destinatario": "eric", "mensagem": "Olá, RabbitMQ!"}'
+  -d "{\"destinatario\": \"eric\", \"mensagem\": \"Ola RabbitMQ\"}"
 ```
 
 **Resposta:**
@@ -68,8 +71,9 @@ Notificação enviada!
 
 **Console:**
 ```
-Mensagem enviada: NotificacaoDTO[destinatario=eric, mensagem=Olá, RabbitMQ!]
-Mensagem recebida: NotificacaoDTO[destinatario=eric, mensagem=Olá, RabbitMQ!]
+Enviado: NotificacaoDTO[destinatario=eric, mensagem=Olá, RabbitMQ!]
+Raw JSON: {"destinatario":"eric","mensagem":"Olá, RabbitMQ!"}
+DTO     : NotificacaoDTO[destinatario=eric, mensagem=Olá, RabbitMQ!]
 ```
 
 ---
@@ -78,12 +82,12 @@ Mensagem recebida: NotificacaoDTO[destinatario=eric, mensagem=Olá, RabbitMQ!]
 
 Acesse `http://localhost:15672` para visualizar filas, mensagens e exchanges.
 
-| Campo | Valor |
-|-------|-------|
+| Campo   | Valor   |
+|---------|---------|
 | Usuário | `guest` |
-| Senha | `guest` |
+| Senha   | `guest` |
 
-> 💡 **Dica:** comente o `@PostConstruct` no `NotificacaoConsumer` para a aplicação não consumir as mensagens ao subir. Como a fila é durável (`durable = true`), as mensagens ficam salvas. Reative a anotação e reinicie — elas serão consumidas imediatamente.
+> 💡 **Dica:** quer visualizar a mensagem na fila antes de consumir? Comente o `@RabbitListener` no `NotificacaoConsumer`. Como a fila é durável (`durable = true`), a mensagem fica salva. Reative a anotação e reinicie — ela é consumida na hora.
 
 ---
 
@@ -92,8 +96,9 @@ Acesse `http://localhost:15672` para visualizar filas, mensagens e exchanges.
 ```
 src/main/java/com/erichiroshi/demorabbitmq/
 ├── NotificacaoDTO.java          # Record com destinatario e mensagem
-├── NotificacaoProducer.java     # Abre conexão AMQP e publica bytes
-├── NotificacaoConsumer.java     # Escuta a fila em Thread Virtual
+├── RabbitMQConfig.java          # Queue, JacksonJsonMessageConverter e RabbitTemplate
+├── NotificacaoProducer.java     # rabbitTemplate.convertAndSend() — uma linha
+├── NotificacaoConsumer.java     # @RabbitListener — deserialização automática
 └── NotificacaoController.java   # POST /notificacoes → dispara o producer
 ```
 
@@ -104,7 +109,7 @@ src/main/java/com/erichiroshi/demorabbitmq/
 Esta série de posts no LinkedIn mostra a evolução da integração com RabbitMQ de forma progressiva:
 
 - **Post 1** — API AMQP pura: sem abstrações do Spring, conexão manual, serialização com `getBytes()`
-- **Post 2** — Spring AMQP Starter: `RabbitTemplate` + `Jackson2JsonMessageConverter`, adeus boilerplate
+- **Post 2** — Spring AMQP Starter: `RabbitTemplate` + `JacksonJsonMessageConverter`, adeus boilerplate
 - **Post 3** — Padrão mercado: Exchange, Routing Key, DLQ e `@RabbitListener` como vai para produção
 
 Acompanhe em [linkedin.com/in/eric-hiroshi](https://linkedin.com/in/eric-hiroshi)
@@ -115,3 +120,4 @@ Acompanhe em [linkedin.com/in/eric-hiroshi](https://linkedin.com/in/eric-hiroshi
 
 **Eric Hiroshi**
 [GitHub](https://github.com/erichiroshi) · [LinkedIn](https://linkedin.com/in/eric-hiroshi)
+https://github.com/erichiroshi) · [LinkedIn](https://linkedin.com/in/eric-hiroshi)
