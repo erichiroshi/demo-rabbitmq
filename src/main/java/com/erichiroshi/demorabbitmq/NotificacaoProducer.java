@@ -13,9 +13,8 @@ public class NotificacaoProducer {
     }
 
     public void enviar(NotificacaoDTO dto) {
-
-        rabbitTemplate.convertAndSend(RabbitMQConfig.FILA, dto);
-        System.out.println("Mensagem enviada: " + dto);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, dto);
+        System.out.println("Mensagem enviada:       " + dto);
     }
 
 }

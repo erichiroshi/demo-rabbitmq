@@ -13,11 +13,11 @@ O objetivo é mostrar a evolução desde a API AMQP mais básica até a configur
 
 ## 🗺️ Roadmap
 
-| Branch                   | Descrição                                            | Status |
-|--------------------------|------------------------------------------------------|--------|
+| Branch | Descrição | Status |
+|--------|-----------|--------|
 | [`post/01-amqp-raw`](https://github.com/erichiroshi/demo-rabbitmq/tree/post/01-amqp-raw) | API AMQP pura — `channel.basicPublish`, bytes na mão | ✅ |
 | [`post/02-starter-amqp`](https://github.com/erichiroshi/demo-rabbitmq/tree/post/02-starter-amqp) | Spring AMQP Starter + `JacksonJsonMessageConverter` | ✅ |
-| `post/03-padrao-mercado` | RabbitTemplate + Exchange + DLQ + @RabbitListener    | 🔜     |
+| [`post/03-padrao-mercado`](https://github.com/erichiroshi/demo-rabbitmq/tree/post/03-padrao-mercado) | Exchange, DLX, DLQ, Binding e `@RabbitListener` | ✅ |
 
 ---
 
@@ -61,7 +61,7 @@ Ao iniciar, o Spring Boot detecta o `compose.yml` e sobe o container do RabbitMQ
 ```bash
 curl -X POST http://localhost:8080/notificacoes \
   -H "Content-Type: application/json" \
-  -d "{\"destinatario\": \"eric\", \"mensagem\": \"Ola RabbitMQ\"}"
+  -d '{"destinatario": "eric", "mensagem": "Ola RabbitMQ"}'
 ```
 
 **Resposta:**
@@ -69,11 +69,21 @@ curl -X POST http://localhost:8080/notificacoes \
 Notificação enviada!
 ```
 
-**Console:**
+**Console — mensagem processada com sucesso:**
 ```
-Enviado: NotificacaoDTO[destinatario=eric, mensagem=Olá, RabbitMQ!]
-Raw JSON: {"destinatario":"eric","mensagem":"Olá, RabbitMQ!"}
-DTO     : NotificacaoDTO[destinatario=eric, mensagem=Olá, RabbitMQ!]
+Mensagem enviada:       NotificacaoDTO[destinatario=eric, mensagem=Ola RabbitMQ]
+Mensagem recebida:      NotificacaoDTO[destinatario=eric, mensagem=Ola RabbitMQ]
+Processado com sucesso: Ola RabbitMQ
+```
+
+**Console — mensagem que falha e vai pra DLQ:**
+```bash
+curl -X POST http://localhost:8080/notificacoes \
+  -H "Content-Type: application/json" \
+  -d '{"destinatario": "erro", "mensagem": "isso vai falhar"}'
+```
+```
+⚠️ DLQ — mensagem com falha: NotificacaoDTO[destinatario=erro, mensagem=isso vai falhar]
 ```
 
 ---
@@ -82,12 +92,14 @@ DTO     : NotificacaoDTO[destinatario=eric, mensagem=Olá, RabbitMQ!]
 
 Acesse `http://localhost:15672` para visualizar filas, mensagens e exchanges.
 
-| Campo   | Valor   |
-|---------|---------|
+| Campo | Valor |
+|-------|-------|
 | Usuário | `guest` |
-| Senha   | `guest` |
+| Senha | `guest` |
 
 > 💡 **Dica:** quer visualizar a mensagem na fila antes de consumir? Comente o `@RabbitListener` no `NotificacaoConsumer`. Como a fila é durável (`durable = true`), a mensagem fica salva. Reative a anotação e reinicie — ela é consumida na hora.
+>
+> Para testar o fluxo da DLQ, envie `{ "destinatario": "erro", "mensagem": "teste" }` — a mensagem será rejeitada e aparecerá em `fila.notificacao.dlq`.
 
 ---
 
@@ -96,9 +108,9 @@ Acesse `http://localhost:15672` para visualizar filas, mensagens e exchanges.
 ```
 src/main/java/com/erichiroshi/demorabbitmq/
 ├── NotificacaoDTO.java          # Record com destinatario e mensagem
-├── RabbitMQConfig.java          # Queue, JacksonJsonMessageConverter e RabbitTemplate
-├── NotificacaoProducer.java     # rabbitTemplate.convertAndSend() — uma linha
-├── NotificacaoConsumer.java     # @RabbitListener — deserialização automática
+├── RabbitMQConfig.java          # Exchange, DLX, filas, bindings, converter e RabbitTemplate
+├── NotificacaoProducer.java     # rabbitTemplate.convertAndSend(exchange, routingKey, dto)
+├── NotificacaoConsumer.java     # @RabbitListener na fila principal e na DLQ
 └── NotificacaoController.java   # POST /notificacoes → dispara o producer
 ```
 
@@ -110,7 +122,9 @@ Esta série de posts no LinkedIn mostra a evolução da integração com RabbitM
 
 - **Post 1** — API AMQP pura: sem abstrações do Spring, conexão manual, serialização com `getBytes()`
 - **Post 2** — Spring AMQP Starter: `RabbitTemplate` + `JacksonJsonMessageConverter`, adeus boilerplate
-- **Post 3** — Padrão mercado: Exchange, Routing Key, DLQ e `@RabbitListener` como vai para produção
+- **Post 3** — Exchange, Routing Key, Binding e DLQ: vocabulário e estrutura do mercado
+- **Post 4** — Consumer + DLQ em ação: erro simulado, `default-requeue-rejected: false` e mensagem que falha tem destino
+- **Post 5** — Conclusão: casos de uso reais e quando faz sentido usar mensageria
 
 Acompanhe em [linkedin.com/in/eric-hiroshi](https://linkedin.com/in/eric-hiroshi)
 
@@ -120,4 +134,3 @@ Acompanhe em [linkedin.com/in/eric-hiroshi](https://linkedin.com/in/eric-hiroshi
 
 **Eric Hiroshi**
 [GitHub](https://github.com/erichiroshi) · [LinkedIn](https://linkedin.com/in/eric-hiroshi)
-https://github.com/erichiroshi) · [LinkedIn](https://linkedin.com/in/eric-hiroshi)
